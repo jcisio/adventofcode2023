@@ -16,11 +16,23 @@ class Problem:
         n = int(c[0] + c[-1])
         return n if n > 9 else n*11
 
+    def convert_text_to_number(self, s):
+        numbers = {'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'}
+        i = 0
+        while i < len(s):
+            if s[i].isalpha():
+                for c in numbers:
+                    if s[i:i+len(c)] == c:
+                        s = s[:i] + numbers[c] + s[i+len(c):]
+                        break
+            i += 1
+        return s
+
     def solve(self):
         return sum(map(self.get_number_from_line, self.input))
 
     def solve2(self):
-        return 0
+        return sum(map(lambda line: self.get_number_from_line(self.convert_text_to_number(line)), self.input))
 
 
 class Solver:
@@ -35,4 +47,4 @@ class Solver:
 f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

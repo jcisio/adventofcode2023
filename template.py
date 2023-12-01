@@ -5,7 +5,7 @@ import parse
 
 class Problem:
     def __init__(self, input) -> None:
-        pass
+        self.input = input
 
     def solve(self):
         return 0

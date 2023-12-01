@@ -8,31 +8,43 @@ import re
 
 
 class Problem:
+    numbers = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9}
+
     def __init__(self, input) -> None:
         self.input = input
 
-    def get_number_from_line(self, line):
-        c = re.sub(r'[a-z]*(.+?)[a-z]*$', r'\1', line)
-        n = int(c[0] + c[-1])
-        return n if n > 9 else n*11
-
-    def convert_text_to_number(self, s):
-        numbers = {'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'}
+    def get_first_number(self, s, parse_text=False):
         i = 0
         while i < len(s):
-            if s[i].isalpha():
-                for c in numbers:
+            if s[i].isdigit():
+                return int(s[i])
+            if parse_text:
+                for c in self.numbers:
                     if s[i:i+len(c)] == c:
-                        s = s[:i] + numbers[c] + s[i+len(c):]
-                        break
+                        return self.numbers[c]
             i += 1
-        return s
+        raise Exception("No number found: " + s)
+
+    def get_last_number(self, s, parse_text=False):
+        i = len(s) - 1
+        while i >= 0:
+            if s[i].isdigit():
+                return int(s[i])
+            if parse_text:
+                for c in self.numbers:
+                    if s[i:i+len(c)] == c:
+                        return self.numbers[c]
+            i -= 1
+        raise Exception("No number found: " + s)
+
+    def get_value(self, s, parse_text=False):
+        return self.get_first_number(s, parse_text) * 10 + self.get_last_number(s, parse_text)
 
     def solve(self):
-        return sum(map(self.get_number_from_line, self.input))
+        return sum(map(self.get_value, self.input))
 
     def solve2(self):
-        return sum(map(lambda line: self.get_number_from_line(self.convert_text_to_number(line)), self.input))
+        return sum(map(lambda s: self.get_value(s, True), self.input))
 
 
 class Solver:

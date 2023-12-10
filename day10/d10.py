@@ -4,21 +4,23 @@ Advent Of Code
 https://adventofcode.com/2023/day/10
 """
 from __future__ import annotations
-from collections import defaultdict
-import parse
 
 
 class Problem:
     def __init__(self, input) -> None:
-        self.input = input
+        self.grid = input['grid']
+        self.start = input['start']
+        self.rows = input['rows']
+        self.cols = input['cols']
+        self.loop = self.find_loop()
 
-    def solve(self):
-        grid = self.input['grid']
-        c = 0
+    def find_loop(self):
+        grid = self.grid
         prev = None
-        curr = self.input['start']
+        curr = self.start
+        loop = [curr]
         while True:
-            print(curr)
+            #print(curr)
             n1 = (curr[0] + grid[curr][0], curr[1] + grid[curr][1])
             n2 = (curr[0] + grid[curr][2], curr[1] + grid[curr][3])
             if n1 == prev:
@@ -27,13 +29,54 @@ class Problem:
             else:
                 prev = curr
                 curr = n1
-            if curr == self.input['start']:
+            if curr == self.start:
                 break
-            c += 1
-        return (c + 1)//2
+            loop.append(curr)
+        return loop
+
+    def solve(self):
+        return len(self.loop)//2
+
+    def count_r(self, p):
+        s = 0
+        for i in range(p[0]):
+            rc = (i, p[1])
+            if rc not in self.loop:
+                continue
+            if self.grid[rc] == (-1, 0, 1, 0):
+                continue
+            if self.grid[rc] == (0, -1, 0, 1):
+                s += 1
+            elif self.grid[rc] == (0, 1, -1, 0):
+                s += 0.5
+            elif self.grid[rc] == (1, 0, 0, -1):
+                s += 0.5
+            else:
+                s -= 0.5
+        return s
+    def print_grid(self):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if (r,c) in self.loop:
+                    print('X', end='')
+                else:
+                    print('.', end='')
+            print()
+
+    def count_c(self, p):
+        return sum([self.score_wall((p[0],j)) for j in range(p[1])])
+
+    def is_inside(self, p):
+        if p in self.loop:
+            return 0
+        if self.count_r(p) % 2 == 1:
+            print(p, self.count_r(p))
+        return 1 if self.count_r(p) % 2 == 1 else 0
 
     def solve2(self):
-        return 0
+        self.print_grid()
+#        print(self.count_r((4,4)))
+        return sum([self.is_inside((r,c)) for r in range(self.rows) for c in range(self.cols)])
 
 
 class Solver:
@@ -68,14 +111,14 @@ class Solver:
         if len(connections) != 2:
             raise Exception("Invalid input")
         grid[s] = (connections[0][0] - s[0], connections[0][1] - s[1], connections[1][0] - s[0], connections[1][1] - s[1])
-        self.input = {'grid': grid, 'start': s}
+        self.input = {'grid': grid, 'start': s, 'rows': len(input), 'cols': len(input[0])}
 
     def solve(self, part=1):
         problem = Problem(self.input)
         return problem.solve() if part==1 else problem.solve2()
 
 
-f = open(__file__[:-3] + '.test', 'r')
+f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
-print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+#print("Puzzle 1: ", solver.solve())
+print("Puzzle 2: ", solver.solve(2))

@@ -12,6 +12,7 @@ class Problem:
         self.start = input['start']
         self.rows = input['rows']
         self.cols = input['cols']
+        self.raw = input['raw']
         self.loop = self.find_loop()
 
     def find_loop(self):
@@ -53,12 +54,14 @@ class Problem:
                 s += 0.5
             else:
                 s -= 0.5
+            #print(rc, self.grid[rc], s)
         return s
+
     def print_grid(self):
         for r in range(self.rows):
             for c in range(self.cols):
                 if (r,c) in self.loop:
-                    print('X', end='')
+                    print(self.raw[(r,c)], end='')
                 else:
                     print('.', end='')
             print()
@@ -69,19 +72,20 @@ class Problem:
     def is_inside(self, p):
         if p in self.loop:
             return 0
-        if self.count_r(p) % 2 == 1:
-            print(p, self.count_r(p))
+        #if self.count_r(p) % 2 == 1:
+            #print(p, self.count_r(p))
         return 1 if self.count_r(p) % 2 == 1 else 0
 
     def solve2(self):
-        self.print_grid()
-#        print(self.count_r((4,4)))
+        #self.print_grid()
+        #print(self.count_r((8,4)))
         return sum([self.is_inside((r,c)) for r in range(self.rows) for c in range(self.cols)])
 
 
 class Solver:
     def __init__(self, input) -> None:
         grid = {}
+        raw = {}
         s = None
         mapping = {
             '|': (-1, 0, 1, 0),
@@ -96,8 +100,10 @@ class Solver:
                 p = input[r][c]
                 if p in mapping:
                     grid[(r, c)] = mapping[p]
+                    raw[(r, c)] = p
                 elif p == 'S':
                     s = (r, c)
+                    raw[s] = 'S'
         # Determine value of S
         connections = []
         for i in [-1, 0, 1]:
@@ -108,10 +114,15 @@ class Solver:
                         #print(n, grid[n], (grid[n][0] + n[0], grid[n][1] + n[1]), (grid[n][2] + n[0], grid[n][3] + n[1]), s)
                         if (grid[n][0] + n[0], grid[n][1] + n[1]) == s or (grid[n][2] + n[0], grid[n][3] + n[1]) == s:
                             connections.append(n)
+                            #print(n)
         if len(connections) != 2:
             raise Exception("Invalid input")
-        grid[s] = (connections[0][0] - s[0], connections[0][1] - s[1], connections[1][0] - s[0], connections[1][1] - s[1])
-        self.input = {'grid': grid, 'start': s, 'rows': len(input), 'cols': len(input[0])}
+        if (connections[0][0] - s[0], connections[0][1] - s[1], connections[1][0] - s[0], connections[1][1] - s[1]) in mapping.values():
+            grid[s] = (connections[0][0] - s[0], connections[0][1] - s[1], connections[1][0] - s[0], connections[1][1] - s[1])
+        else:
+            grid[s] = (connections[1][0] - s[0], connections[1][1] - s[1], connections[0][0] - s[0], connections[0][1] - s[1])
+        #print(grid[s])
+        self.input = {'grid': grid, 'start': s, 'rows': len(input), 'cols': len(input[0]), 'raw': raw}
 
     def solve(self, part=1):
         problem = Problem(self.input)

@@ -12,27 +12,112 @@ class Problem:
     def __init__(self, input) -> None:
         self.input = input
 
-    def solve(self):
-        rounded = self.input['rounded'].copy()
-        for c in range(self.input['c']):
-            top = 0
+    def tilt(self, direction):
+        rounded = self.input['rounded']
+        if direction == 'north':
+            for c in range(self.input['c']):
+                free = 0
+                for r in range(self.input['r']):
+                    cell = (r, c)
+                    if cell in self.input['cubed']:
+                        free = r + 1
+                    elif cell in rounded:
+                        if free < r:
+                            rounded.remove(cell)
+                            rounded.append((free, c))
+                        free += 1
+        elif direction == 'south':
+            for c in range(self.input['c']):
+                free = self.input['r'] - 1
+                for r in range(self.input['r'], -1, -1):
+                    cell = (r, c)
+                    if cell in self.input['cubed']:
+                        free = r - 1
+                    elif cell in rounded:
+                        if free > r:
+                            rounded.remove(cell)
+                            rounded.append((free, c))
+                        free -= 1
+        elif direction == 'east':
             for r in range(self.input['r']):
+                free = self.input['c'] - 1
+                for c in range(self.input['c'], -1, -1):
+                    cell = (r, c)
+                    if cell in self.input['cubed']:
+                        free = c - 1
+                    elif cell in rounded:
+                        if free > c:
+                            rounded.remove(cell)
+                            rounded.append((r, free))
+                        free -= 1
+        elif direction == 'west':
+            for r in range(self.input['r']):
+                free = 0
+                for c in range(self.input['c']):
+                    cell = (r, c)
+                    if cell in self.input['cubed']:
+                        free = c + 1
+                    elif cell in rounded:
+                        if free < c:
+                            rounded.remove(cell)
+                            rounded.append((r, free))
+                        free += 1
+    def do_cycle(self):
+        self.tilt('north')
+        self.tilt('west')
+        self.tilt('south')
+        self.tilt('east')
+
+    def state(self):
+        s = ''
+        for r in range(self.input['r']):
+            for c in range(self.input['c']):
                 cell = (r, c)
                 if cell in self.input['cubed']:
-                    top = r + 1
-                elif cell in rounded:
-                    if top < r:
-                        rounded.remove(cell)
-                        rounded.append((top, c))
-#                        print(f"({r}, {c}) -> ({top}, {c})")
-                    top += 1
+                    s += '#'
+                elif cell in self.input['rounded']:
+                    s += 'O'
+                else:
+                    s += '.'
+            s += '\n'
+        return s
+
+    def score(self):
         score = 0
-        for r, c in rounded:
+        for r, _ in self.input['rounded']:
             score += self.input['r'] - r
         return score
 
+    def score(self, state = None):
+        if not state:
+            state = self.state()
+        score = 0
+        for i, c in enumerate(state):
+            if c == 'O':
+                score += self.input['r'] - i // (self.input['c'] + 1)
+        return score
+
+
+    def solve(self):
+        self.tilt('north')
+        return self.score()
+
     def solve2(self):
-        return 0
+        states = []
+        N = 1000000000
+        i = 0
+        while i < N:
+            self.do_cycle()
+            state = self.state()
+            #print(i, '\t', ' '.join(state.split('\n')), self.score(state))
+            try:
+                idx = states.index(state)
+                #print(f'Loop found at {i} look back to {idx}')
+                loop_size = i - idx
+                return self.score(states[(N-i-1) % loop_size + idx])
+            except ValueError:
+                states.append(state)
+            i += 1
 
 
 class Solver:
@@ -55,4 +140,4 @@ class Solver:
 f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

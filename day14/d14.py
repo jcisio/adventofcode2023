@@ -3,11 +3,6 @@ Advent Of Code
 --- Day 14: Parabolic Reflector Dish ---
 https://adventofcode.com/2023/day/14
 """
-from __future__ import annotations
-from collections import defaultdict
-import parse
-
-
 class Problem:
     def __init__(self, input) -> None:
         self.input = input
@@ -82,12 +77,6 @@ class Problem:
             s += '\n'
         return s
 
-    def score(self):
-        score = 0
-        for r, _ in self.input['rounded']:
-            score += self.input['r'] - r
-        return score
-
     def score(self, state = None):
         if not state:
             state = self.state()
@@ -109,12 +98,9 @@ class Problem:
         while i < N:
             self.do_cycle()
             state = self.state()
-            #print(i, '\t', ' '.join(state.split('\n')), self.score(state))
             try:
                 idx = states.index(state)
-                #print(f'Loop found at {i} look back to {idx}')
-                loop_size = i - idx
-                return self.score(states[(N-i-1) % loop_size + idx])
+                return self.score(states[(N-i-1) % (i - idx) + idx])
             except ValueError:
                 states.append(state)
             i += 1

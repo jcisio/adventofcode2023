@@ -21,13 +21,14 @@ class Problem:
     def __init__(self, input) -> None:
         self.R = input['R']
         self.C = input['C']
+        self.input = input
+
+    def init(self):
         self.grid = {}
         for r in range(self.R):
             for c in range(self.C):
                 # tile, right, down, left, up
-                self.grid[(r, c)] = [input['grid'][r][c], self.EMPTY, self.EMPTY, self.EMPTY, self.EMPTY]
-        # Beam arrive at (0,0) to the right
-        self.grid[(0, 0)][1] = self.NOT_VISITED
+                self.grid[(r, c)] = [self.input['grid'][r][c], self.EMPTY, self.EMPTY, self.EMPTY, self.EMPTY]
 
     def energized(self, tile):
         return sum(tile[1:]) > 0
@@ -38,7 +39,11 @@ class Problem:
                 print('#' if self.energized(self.grid[(r,c)]) else '.', end='')
             print()
 
-    def solve(self):
+    def solve(self, init_tile, init_beams):
+        self.init()
+        for beam in init_beams:
+            self.grid[init_tile][beam] = self.NOT_VISITED
+
         while True:
             updated = False
             for rc, tile in self.grid.items():
@@ -66,8 +71,23 @@ class Problem:
         #self.print()
         return sum([1 for tile in self.grid.values() if self.energized(tile) > 0])
 
+    def solve1(self):
+        return self.solve((0, 0), [self.RIGHT])
+
     def solve2(self):
-        return 0
+        conf = [
+#            ((0,0), [self.RIGHT, self.DOWN]),
+#            ((0,self.C-1), [self.LEFT, self.DOWN]),
+#            ((self.R-1,0), [self.RIGHT, self.UP]),
+#            ((self.R-1,self.C-1), [self.LEFT, self.UP])
+        ]
+        for r in range(1, self.R-1):
+            conf.append(((r,0), [self.RIGHT]))
+            conf.append(((r,self.C-1), [self.LEFT]))
+        for c in range(1, self.C-1):
+            conf.append(((0,c), [self.DOWN]))
+            conf.append(((self.R-1,c), [self.UP]))
+        return max([self.solve(c[0], c[1]) for c in conf])
 
 
 class Solver:
@@ -76,10 +96,10 @@ class Solver:
 
     def solve(self, part=1):
         problem = Problem(self.input)
-        return problem.solve() if part==1 else problem.solve2()
+        return problem.solve1() if part==1 else problem.solve2()
 
 
 f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

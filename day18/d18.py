@@ -12,12 +12,19 @@ class Problem:
     def __init__(self, input) -> None:
         self.plan = input
         self.grid = {}
+
+    def parse_step(self, step, part=1):
+        D = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        if part == 1:
+            return D['UDLR'.index(step[0])], step[1]
+        return D['3120'.index(step[2][-1])], int(step[2][:-1], 16)
+
+    def parse(self):
         here = (0, 0)
-        D = {'U': (-1, 0), 'D': (1, 0), 'L': (0, -1), 'R': (0, 1) }
         for step in self.plan:
-            d = D[step[0]]
-            for i in range(step[1]):
-                self.grid[(here[0]+d[0]*(i+1), here[1]+d[1]*(i+1))] = step[2]
+            d, length = self.parse_step(step)
+            for i in range(length):
+                self.grid[(here[0]+d[0]*(i+1), here[1]+d[1]*(i+1))] = True
             here = (here[0]+d[0]*step[1], here[1]+d[1]*step[1])
         self.r = min([x[0] for x in self.grid]), max([x[0] for x in self.grid])
         self.c = min([x[1] for x in self.grid]), max([x[1] for x in self.grid])
@@ -28,7 +35,7 @@ class Problem:
                 print('#' if (r,c) in self.grid else ' ', end='')
             print()
 
-    def solve(self):
+    def count(self):
         #self.print()
         for r in range(self.r[0], self.r[1]+1):
             if (r,self.c[0]) not in self.grid:
@@ -54,8 +61,23 @@ class Problem:
             for d in [(0,-1), (0,1), (-1,0), (1,0)]:
                 q.append((r+d[0], c+d[1]))
 
+    def solve(self):
+        self.parse()
+        return self.count()
+
     def solve2(self):
-        return 0
+        here = (0, 0)
+        P = []
+        border = 0
+        for step in self.plan:
+            d, length = self.parse_step(step, 2)
+            here = (here[0]+d[0]*length, here[1]+d[1]*length)
+            P.append(here)
+            border += length
+        P.append(P[0])
+        s = abs(sum(r1*c2 - r2*c1 for (r1,c1),(r2,c2) in zip(P, P[1:])))//2 + border//2 + 1
+        return s
+
 
 class Solver:
     def __init__(self, input) -> None:
@@ -66,7 +88,7 @@ class Solver:
         return problem.solve() if part==1 else problem.solve2()
 
 
-f = open(__file__[:-3] + '.test', 'r')
+f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
-print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+#print("Puzzle 1: ", solver.solve())
+print("Puzzle 2: ", solver.solve(2))

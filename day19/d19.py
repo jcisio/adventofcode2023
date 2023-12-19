@@ -14,13 +14,13 @@ class Rule:
         self.R = True if rule == 'R' else False
         self.A = True if rule == 'A' else False
         self.next = None
-        self.condition = lambda _: True
+        self.op = None
         if self.R or self.A:
             return
         parts = rule.split(':')
         if len(parts) == 2:
             part, op, val = parse.parse('{:w}{:1}{:d}', parts.pop(0)).fixed
-            self.condition = lambda x: (op == '>' and x[part] > val) or (op == '<' and x[part] < val)
+            self.op = (part, op, val)
         if parts[0] == 'A': self.A = True
         elif parts[0] == 'R': self.R = True
         else: self.next = parts[0]
@@ -28,8 +28,11 @@ class Rule:
     def __str__(self):
         return f'A={self.A}, R={self.R}, next={self.next}'
 
+    def validate(self, part):
+        return self.op == None or (self.op[1] == '>' and part[self.op[0]] > self.op[2]) or (self.op[1] == '<' and part[self.op[0]] < self.op[2])
+
     def process(self, part):
-        if self.condition(part) == True:
+        if self.validate(part) == True:
             return 'R' if self.R else 'A' if self.A else self.next
         return False
 
@@ -61,18 +64,36 @@ class Problem:
         self.workflows = workflows
         self.parts = parts
 
+    def accepted(self, part):
+        w = 'in'
+        while w not in ['R', 'A']:
+            w = self.workflows[w].process(part)
+        return w == 'A'
+
     def solve(self):
-        s = 0
-        for part in self.parts:
-            w = 'in'
-            while w not in ['R', 'A']:
-                w = self.workflows[w].process(part)
-            if w == 'A':
-                s += sum(part.values())
-        return s
+        return sum([sum(part.values()) for part in self.parts if self.accepted(part)])
 
     def solve2(self):
-        return 0
+        c = defaultdict(lambda: set([1,4001]))
+        for w in self.workflows.values():
+            for r in w.rules:
+                if not r.op:
+                    continue
+                c[r.op[0]].add(r.op[2] + (0 if r.op[1] == '<' else 1))
+        ss = 0
+        for t in 'xmas':
+
+            c[t] = sorted(list(c[t]))
+
+        print(len(c['x'])*len(c['m'])*len(c['a'])*len(c['s']))
+        for x in range(len(c['x'])-1):
+            for m in range(len(c['m'])-1):
+                print(c['x'][x], c['m'][m])
+                for a in range(len(c['a'])-1):
+                    for s in range(len(c['s'])-1):
+                        if self.accepted({'x':c['x'][x], 'm':c['m'][m], 'a':c['a'][a], 's': c['s'][s]}):
+                            ss += (c['x'][x+1] - c['x'][x])*(c['m'][m+1] - c['m'][m])*(c['a'][a+1] - c['a'][a])*(c['s'][s+1] - c['s'][s])
+        return ss
 
 
 class Solver:
@@ -87,4 +108,4 @@ class Solver:
 f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

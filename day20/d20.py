@@ -5,7 +5,7 @@ https://adventofcode.com/2023/day/20
 """
 from __future__ import annotations
 from collections import defaultdict
-import parse
+import math
 
 
 class Problem:
@@ -41,12 +41,24 @@ class Problem:
                     modules[o]['input'][m] = False
         self.modules = modules
 
+    def get_state(self):
+        state = []
+        for m in self.modules:
+            if self.modules[m]['type'] == '%':
+                state.append(self.modules[m]['state'])
+            elif self.modules[m]['type'] == '&':
+                state += self.modules[m]['input'].values()
+        return state
+
     def process(self):
         incoming = [(None, False, 'broadcaster')]
-        pulses = [1, 0]
+        pulses = [1, 0, 0, set()]
         while incoming:
             next = []
             for f,p,i in incoming:
+                if i == 'rx' and p == False:
+                    pulses[2] += 1
+
                 m = self.modules[i]
                 if m['type'] == 'B':
                     for o in m['output']:
@@ -67,11 +79,12 @@ class Problem:
                         next.append((i,p_new,o))
                         self.modules[o]['input'][i] = p_new
                     pulses[int(p_new)] += len(m['output'])
+                    if p_new:
+                        pulses[3].add(i)
                 elif m['type'] == 'O':
                     pass
                 else:
                     raise Exception('Unknown type')
-            print(next)
             incoming = next.copy()
         return pulses
 
@@ -84,7 +97,23 @@ class Problem:
         return c[0]*c[1]
 
     def solve2(self):
-        return 0
+        # &hb -> rx
+        modules = [m for m in self.modules if 'hb' in self.modules[m]['output']]
+        appearances = defaultdict(list)
+        c = defaultdict(int)
+        for i in range(1000000000000):
+            cc = self.process()
+            for m in modules:
+                if m in cc[3]:
+                    appearances[m].append(i)
+                    if len(appearances[m]) > 1:
+                        c[m] = appearances[m][-1] - appearances[m][-2]
+            if len(c) == len(modules):
+                break
+        p = 1
+        for i in c:
+            p = p*c[i]//math.gcd(p,c[i])
+        return p
 
 
 class Solver:
@@ -96,7 +125,7 @@ class Solver:
         return problem.solve() if part==1 else problem.solve2()
 
 
-f = open(__file__[:-3] + '.in', 'r')
+f = open(__file__[:-3] + '.test', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

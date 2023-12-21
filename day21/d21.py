@@ -5,7 +5,6 @@ https://adventofcode.com/2023/day/21
 """
 from __future__ import annotations
 from collections import defaultdict
-import parse
 
 
 class Problem:
@@ -31,45 +30,54 @@ class Problem:
                     new.add((nr,nc))
         return new
 
-    def solve(self):
-        s = set([self.start])
-        for _ in range(64):
-            s = self.move(s)
-        return len(s)
+    # Number of tiles reached after s steps
+    def count(self, start, steps):
+        c = set([start])
+        for _ in range(steps):
+            c = self.move(c)
+        return len(c)
 
-    def solve2(self, M=5001):
+
+    def solve(self):
+        return self.count(self.start, 64)
+
+    def solve2(self, M=26501365):
         assert self.r == self.c
         R = self.r
-        # Suppose that we can reach any point from any point after these steps:
-        l = self.r + self.c
-        corners = [(0,0),(0,self.c-1),(self.r-1,0),(self.r-1,self.c-1)]
-        # From a corner how many we can reach for a number of steps?
-        d_corners = defaultdict(list)
-        for c in corners:
-            s = set([c])
-            for _ in range(l-1):
-                s = self.move(s)
-                d_corners[c].append(len(s))
-        # We also know that l is even, each edge length is odd
-        spots = (d_corners[c][-2], d_corners[c][-1])
-        print(spots)
-        # How many steps we need to reach a corner from S?
-        s_corners = {}
-        s = set([self.start])
-        for i in range(l):
-            s = self.move(s)
-            for c in corners:
-                if c in s and c not in s_corners:
-                    s_corners[c] = i+1
-        # In my input, edge length is 131, each corner needs exactly 130 steps
-        #print(s_corners)
-        # Number of tiles we control completely
-        N = (M - max(s_corners.values()))//R
-        tiles = N*(N-1)*2 + N*4 + 1
-        partials = (N+1)*4
-        print(self.r, self.c, len(self.blocks))
-        return tiles*spots[M%2] + partials*d_corners[(0,0)][(M - max(s_corners.values())) % R]
 
+        l = M//R # l is even: 202300
+        r = R//2
+
+        # complete tiles
+        c_odd = (l-1)**2
+        c_even = l**2
+
+        # incomplete tiles
+        i_bl = self.count((R-1,0), r-1)
+        i_tl = self.count((0,0), r-1)
+        i_tr = self.count((0,R-1), r-1)
+        i_br = self.count((R-1,R-1), r-1)
+        ix_bl = self.count((R-1,0), 3*r)
+        ix_tl = self.count((0,0), 3*r)
+        ix_tr = self.count((0,R-1), 3*r)
+        ix_br = self.count((R-1,R-1), 3*r)
+
+        # 4 corners
+        corners = self.count((0, r), R-1) \
+            + self.count((r, 0), R-1) \
+            + self.count((R-1, r), R-1) \
+            + self.count((r, R-1), R-1)
+
+        return c_odd * self.count((r,r), R*2-1) \
+            + c_even * self.count((r,r), R*2) \
+            + l * (i_bl + i_tl + i_tr + i_br) \
+            + (l-1) * (ix_bl + ix_tl + ix_tr + ix_br) \
+            + corners
+# 593177780427593 is too high
+# 593168996149761 is too low
+# 593174156999363 not right
+# 593174079316436 not right
+# 593174122420825
 
 class Solver:
     def __init__(self, input) -> None:
@@ -80,7 +88,7 @@ class Solver:
         return problem.solve() if part==1 else problem.solve2()
 
 
-f = open(__file__[:-3] + '.in', 'r')
+f = open(__file__[:-3] + '.test', 'r')
 solver = Solver(f.read().strip().split('\n'))
-#print("Puzzle 1: ", solver.solve())
+print("Puzzle 1: ", solver.solve())
 print("Puzzle 2: ", solver.solve(2))

@@ -33,12 +33,42 @@ class Problem:
 
     def solve(self):
         s = set([self.start])
-        for i in range(64):
+        for _ in range(64):
             s = self.move(s)
         return len(s)
 
-    def solve2(self):
-        return 0
+    def solve2(self, M=5001):
+        assert self.r == self.c
+        R = self.r
+        # Suppose that we can reach any point from any point after these steps:
+        l = self.r + self.c
+        corners = [(0,0),(0,self.c-1),(self.r-1,0),(self.r-1,self.c-1)]
+        # From a corner how many we can reach for a number of steps?
+        d_corners = defaultdict(list)
+        for c in corners:
+            s = set([c])
+            for _ in range(l-1):
+                s = self.move(s)
+                d_corners[c].append(len(s))
+        # We also know that l is even, each edge length is odd
+        spots = (d_corners[c][-2], d_corners[c][-1])
+        print(spots)
+        # How many steps we need to reach a corner from S?
+        s_corners = {}
+        s = set([self.start])
+        for i in range(l):
+            s = self.move(s)
+            for c in corners:
+                if c in s and c not in s_corners:
+                    s_corners[c] = i+1
+        # In my input, edge length is 131, each corner needs exactly 130 steps
+        #print(s_corners)
+        # Number of tiles we control completely
+        N = (M - max(s_corners.values()))//R
+        tiles = N*(N-1)*2 + N*4 + 1
+        partials = (N+1)*4
+        print(self.r, self.c, len(self.blocks))
+        return tiles*spots[M%2] + partials*d_corners[(0,0)][(M - max(s_corners.values())) % R]
 
 
 class Solver:
@@ -52,5 +82,5 @@ class Solver:
 
 f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
-print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+#print("Puzzle 1: ", solver.solve())
+print("Puzzle 2: ", solver.solve(2))

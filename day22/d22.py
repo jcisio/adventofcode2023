@@ -17,6 +17,9 @@ class Problem:
             # Coordinate is sorted
             assert b[0] <= b[3] and b[1] <= b[4] and b[2] <= b[5]
         self.bricks.sort(key=lambda b: b[2])
+        # Name it to debug order
+        for i in range(len(self.bricks)):
+            self.bricks[i] += (chr(i+65),)
 
     def add_spaces(self, spaces, brick):
         for x in range(brick[0], brick[3]+1):
@@ -46,17 +49,22 @@ class Problem:
                     return True
         return False
 
-    def solve(self):
+    def falling_down(self):
+        s = 0
         spaces = set()
         # Falling down
         for i, b in enumerate(self.bricks):
             dz = self.can_fall(spaces, b)
             if dz > 0:
-                b = (b[0], b[1], b[2]-dz, b[3], b[4], b[5]-dz)
-                #print(f'Brick {chr(i+65)} fell down {dz}')
-            # Name it to debug order
-            self.bricks[i] = b + (chr(i+65),)
+                b = (b[0], b[1], b[2]-dz, b[3], b[4], b[5]-dz, b[6])
+                #print(f'Brick {b[6]} fell down {dz}')
+                s += 1
+            self.bricks[i] = b
             self.add_spaces(spaces, b)
+        return s
+
+    def solve(self):
+        self.falling_down()
         self.bricks.sort(key=lambda b: b[2])
 
         holders = defaultdict(list)
@@ -78,7 +86,14 @@ class Problem:
         return s
 
     def solve2(self):
-        return 0
+        self.falling_down()
+        bricks = self.bricks.copy()
+        s = 0
+        for i in range(len(bricks)):
+            self.bricks = bricks[:i] + bricks[i+1:]
+            #print(self.bricks)
+            s += self.falling_down()
+        return s
 
 
 class Solver:
@@ -90,7 +105,7 @@ class Solver:
         return problem.solve() if part==1 else problem.solve2()
 
 
-f = open(__file__[:-3] + '.test', 'r')
+f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
-#print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 2: ", solver.solve(2))

@@ -4,8 +4,6 @@ Advent Of Code
 https://adventofcode.com/2023/day/23
 """
 from __future__ import annotations
-from collections import defaultdict
-import parse
 
 
 class Problem:
@@ -13,31 +11,46 @@ class Problem:
         self.input = input
         self.r, self.c = len(input), len(input[0])
 
-    def longest(self, start, end, visited):
-        if start == end:
-            #print(len(visited), '\n', visited)
-            return 0
-        if self.input[start[0]][start[1]] == '#':
-            return 0
-        if start in visited:
-            return 0
-        if start[0] < 0 or start[0] >= self.r or start[1] < 0 or start[1] >= self.c:
-            return 0
-
-        visited.add(start)
-
-        next = {'>': (0, 1), 'v': (1, 0), '<': (0, -1), '^': (-1, 0)}
-        c = self.input[start[0]][start[1]]
-        if c in next:
-            return 1 + self.longest((start[0]+next[c][0], start[1]+next[c][1]), end, visited)
-
-        lengths = {}
-        for d in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
-            lengths[d] = self.longest((start[0]+d[0], start[1]+d[1]), end, visited.copy())
-        return (1 + max(lengths.values())) if lengths else 0
-
     def solve(self):
-        return self.longest((0, 1), (self.r-1, self.c-2), set())
+        Q = [((1,1), set([(0,1)]), 1)]
+        end = (self.r-1, self.c-2)
+        next = {'>': (0, 1), 'v': (1, 0), '<': (0, -1), '^': (-1, 0)}
+        M = 0
+        while Q:
+            pos, visited, steps = Q.pop()
+            if pos in visited:
+                continue
+            if pos == end:
+                if steps > M:
+                    M = steps
+                continue
+            visited.add(pos)
+            # c = self.input[pos[0]][pos[1]]
+            # if c in next:
+            #     Q.append(((pos[0]+next[c][0], pos[1]+next[c][1]), visited.copy(), steps+1))
+            #     continue
+            while True:
+                candidate = []
+                for d in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
+                    new = (pos[0]+d[0], pos[1]+d[1])
+                    if new in visited or self.input[new[0]][new[1]] == '#':
+                        continue
+                    candidate.append(new)
+                if len(candidate) == 0:
+                    break
+                if len(candidate) > 1:
+                    for new in candidate:
+                        Q.append((new, visited.copy(), steps+1))
+                    break
+                else:
+                    pos = candidate[0]
+                    visited.add(pos)
+                    steps += 1
+                    if pos == end:
+                        if steps > M:
+                            M = steps
+                        break
+        return M
 
     def solve2(self):
         return 0
@@ -51,10 +64,7 @@ class Solver:
         problem = Problem(self.input)
         return problem.solve() if part==1 else problem.solve2()
 
-import sys
-sys.setrecursionlimit(10000)
-
-f = open(__file__[:-3] + '.test', 'r')
+f = open(__file__[:-3] + '.in', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
 #print("Puzzle 2: ", solver.solve(2))

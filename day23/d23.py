@@ -15,6 +15,7 @@ class Problem:
         Q = [((1,1), set([(0,1)]), 1)]
         end = (self.r-1, self.c-2)
         next = {'>': (0, 1), 'v': (1, 0), '<': (0, -1), '^': (-1, 0)}
+        routes = {}
         M = 0
         while Q:
             pos, visited, steps = Q.pop()
@@ -23,12 +24,22 @@ class Problem:
             if pos == end:
                 if steps > M:
                     M = steps
+                    print(M)
+                continue
+            if pos in routes:
+                if len(visited & routes[pos][1]) > 0:
+                    continue
+                print('route', pos, len(visited), len(routes[pos][1]))
+                visited |= routes[pos][1]
+                print(len(visited))
+                Q.append((routes[pos][0], visited, steps+len(routes[pos][1])))
                 continue
             visited.add(pos)
-            # c = self.input[pos[0]][pos[1]]
+            #c = self.input[pos[0]][pos[1]]
             # if c in next:
             #     Q.append(((pos[0]+next[c][0], pos[1]+next[c][1]), visited.copy(), steps+1))
             #     continue
+            route_start = None
             while True:
                 candidate = []
                 for d in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
@@ -43,13 +54,22 @@ class Problem:
                         Q.append((new, visited.copy(), steps+1))
                     break
                 else:
+                    if not route_start:
+                        route_start = pos
+                        route_tiles = set()
                     pos = candidate[0]
                     visited.add(pos)
+                    route_tiles.add(pos)
+                    route_end = pos
                     steps += 1
                     if pos == end:
                         if steps > M:
                             M = steps
+                            print(M)
                         break
+            if route_start:
+                routes[route_start] = (route_end, route_tiles)
+                routes[route_end] = (route_start, route_tiles)
         return M
 
     def solve2(self):
@@ -64,7 +84,7 @@ class Solver:
         problem = Problem(self.input)
         return problem.solve() if part==1 else problem.solve2()
 
-f = open(__file__[:-3] + '.in', 'r')
+f = open(__file__[:-3] + '.test', 'r')
 solver = Solver(f.read().strip().split('\n'))
 print("Puzzle 1: ", solver.solve())
 #print("Puzzle 2: ", solver.solve(2))

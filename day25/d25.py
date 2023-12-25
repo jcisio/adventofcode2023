@@ -6,6 +6,8 @@ https://adventofcode.com/2023/day/25
 from __future__ import annotations
 import random
 import networkx as nx
+from datetime import datetime
+
 
 class Problem:
     def __init__(self, input) -> None:
@@ -49,11 +51,11 @@ class Problem:
     def solve(self):
         c = 0
         while True:
+            c += 1
             nodes, edges = self.contract()
+            print(datetime.now().strftime("%H:%M:%S"), c, len(edges))
             if len(edges) == 3:
                 break
-            c += 1
-            print(c, len(edges))
         # print(nodes, edges)
         l = list(nodes.values())
         return l[0] * l[1]
@@ -79,5 +81,5 @@ class Solver:
 
 f = open(__file__[:-3] + '.test', 'r')
 solver = Solver(f.read().strip().split('\n'))
-#print("Puzzle 1: ", solver.solve())
-print("Puzzle 2: ", solver.solve(2))
+print("Puzzle 1: ", solver.solve())
+#print("Puzzle 2: ", solver.solve(2))
